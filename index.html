@@ -1,0 +1,2850 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Cumhuriyetin İzinde: Bayrak Avcısı</title>
+  <style>
+    :root {
+      --red-primary: #e30a17;
+      --red-dark: #9e050f;
+      --red-light: #ff4757;
+      --blue-dark: #0f2547;
+      --blue-mid: #1d4e89;
+      --blue-sky: #38bdf8;
+      --gold: #fbbf24;
+      --gold-dark: #d97706;
+      --white: #ffffff;
+      --off-white: #f8fafc;
+      --text-dark: #0f172a;
+      --success: #16a34a;
+      --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.35);
+      --radius-lg: 20px;
+      --radius-md: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--blue-dark);
+      font-family: 'Segoe UI', 'Trebuchet MS', system-ui, -apple-system, sans-serif;
+      color: var(--white);
+      touch-action: none;
+    }
+
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas#gameCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Inline SVG Flag Icon helper */
+    .tr-flag-svg {
+      display: inline-block;
+      width: 1.35em;
+      height: 0.9em;
+      vertical-align: -0.12em;
+      border-radius: 3px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      flex-shrink: 0;
+    }
+
+    /* Screen Overlay System */
+    .screen-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      background: radial-gradient(circle at center, rgba(15, 37, 71, 0.32) 0%, rgba(10, 22, 44, 0.62) 100%);
+      overflow-y: auto;
+    }
+
+    .screen-layer.active {
+      display: flex;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 720px;
+      max-height: 94vh;
+      overflow-y: auto;
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 245, 249, 0.95) 100%);
+      color: var(--text-dark);
+      border-radius: var(--radius-lg);
+      border: 4px solid var(--red-primary);
+      box-shadow: var(--shadow-lg), 0 0 0 4px rgba(255, 255, 255, 0.35);
+      padding: 20px 26px;
+      text-align: center;
+      position: relative;
+    }
+
+    .panel-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--red-primary);
+      color: var(--white);
+      font-weight: 800;
+      font-size: 0.84rem;
+      padding: 6px 16px;
+      border-radius: 999px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      box-shadow: 0 4px 10px rgba(227, 10, 23, 0.3);
+    }
+
+    .game-title {
+      font-size: clamp(1.65rem, 3.8vw, 2.45rem);
+      font-weight: 900;
+      color: var(--red-primary);
+      line-height: 1.08;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 0 rgba(15, 23, 42, 0.12);
+      margin-bottom: 2px;
+    }
+
+    .game-subtitle {
+      font-size: clamp(1.05rem, 2.3vw, 1.35rem);
+      font-weight: 800;
+      color: var(--blue-mid);
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .section-title {
+      font-size: clamp(1.3rem, 2.8vw, 1.8rem);
+      font-weight: 900;
+      color: var(--blue-dark);
+      margin-bottom: 6px;
+    }
+
+    .lead-text {
+      font-size: 0.95rem;
+      color: #334155;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    /* Animated Intro Showcase Canvas inside Opening Screen */
+    .intro-stage-wrap {
+      position: relative;
+      width: 100%;
+      height: 128px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 3px solid var(--blue-mid);
+      margin-bottom: 12px;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.25);
+      background: linear-gradient(180deg, #0284c7 0%, #bae6fd 100%);
+    }
+
+    #introCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .intro-stage-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(90deg, rgba(15, 37, 71, 0.88) 0%, rgba(29, 78, 137, 0.85) 100%);
+      color: var(--white);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 5px 12px;
+      text-align: center;
+    }
+
+    .status-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .status-pill {
+      background: #e2e8f0;
+      color: var(--blue-dark);
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Buttons */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+
+    button.btn {
+      appearance: none;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      line-height: 1.2;
+      min-height: 46px;
+    }
+
+    button.btn:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 2px;
+    }
+
+    button.btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    button.btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button.btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #ef233c 0%, #d90429 100%);
+      color: var(--white);
+      box-shadow: 0 5px 0 #9b021d, 0 8px 16px rgba(217, 4, 41, 0.3);
+      grid-column: span 2;
+      font-size: 1.12rem;
+      padding: 14px 22px;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+      color: var(--white);
+      box-shadow: 0 4px 0 #1e3a8a, 0 6px 12px rgba(29, 78, 216, 0.22);
+    }
+
+    .btn-neutral {
+      background: #e2e8f0;
+      color: #1e293b;
+      box-shadow: 0 4px 0 #94a3b8;
+    }
+
+    .btn-gold {
+      background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+      color: #0f172a;
+      box-shadow: 0 4px 0 #92400e;
+    }
+
+    /* Cards for Levels & Age Groups */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin: 12px 0;
+      text-align: left;
+    }
+
+    .choice-card {
+      background: var(--white);
+      border: 3px solid #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .choice-card:hover:not(.locked) {
+      border-color: var(--blue-mid);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    .choice-card.selected {
+      border-color: var(--red-primary);
+      background: #fff5f5;
+      box-shadow: 0 0 0 3px rgba(227, 10, 23, 0.2);
+    }
+
+    .choice-card.locked {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      opacity: 0.72;
+      cursor: not-allowed;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-weight: 800;
+      font-size: 1.02rem;
+      color: var(--blue-dark);
+    }
+
+    .card-badge {
+      font-size: 0.74rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+
+    .badge-easy { background: #dcfce7; color: #166534; }
+    .badge-medium { background: #fef3c7; color: #92400e; }
+    .badge-hard { background: #fee2e2; color: #991b1b; }
+    .badge-expert { background: #ede9fe; color: #5b21b6; }
+
+    .card-desc {
+      font-size: 0.85rem;
+      color: #475569;
+      line-height: 1.35;
+    }
+
+    .card-meta {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--blue-mid);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+    }
+
+    /* Instructions List */
+    .how-to-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      text-align: left;
+      margin: 12px 0;
+    }
+
+    .info-box {
+      background: var(--white);
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .info-box h4 {
+      color: var(--red-primary);
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .info-box p {
+      font-size: 0.86rem;
+      color: #334155;
+      line-height: 1.4;
+    }
+
+    /* In-Game HUD */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 5;
+      display: none;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 16px;
+      pointer-events: none;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    #hud.active {
+      display: flex;
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      pointer-events: auto;
+    }
+
+    .hud-chip {
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid rgba(255, 255, 255, 0.32);
+      color: var(--white);
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .hud-chip .highlight {
+      color: var(--gold);
+    }
+
+    .hud-btn {
+      background: rgba(227, 10, 23, 0.92);
+      border: 2px solid var(--white);
+      color: var(--white);
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      min-height: 40px;
+    }
+
+    .hud-btn:hover {
+      background: #b90712;
+    }
+
+    /* Progress Bar inside HUD */
+    .flag-progress-wrap {
+      width: 96px;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      overflow: hidden;
+      display: inline-block;
+    }
+
+    .flag-progress-bar {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ef233c, #fbbf24);
+      transition: width 0.25s ease;
+    }
+
+    /* Touch Controls */
+    #touchControls {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 6;
+      display: none;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none;
+    }
+
+    #touchControls.active {
+      display: flex;
+    }
+
+    .dpad {
+      position: relative;
+      width: 156px;
+      height: 156px;
+      pointer-events: auto;
+      opacity: 0.88;
+    }
+
+    .dpad-btn {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      color: var(--white);
+      border-radius: 14px;
+      font-size: 1.25rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+      touch-action: none;
+    }
+
+    .dpad-btn:active, .dpad-btn.pressed {
+      background: var(--red-primary);
+      transform: scale(0.95);
+    }
+
+    .dpad-up { top: 0; left: 53px; }
+    .dpad-down { bottom: 0; left: 53px; }
+    .dpad-left { top: 53px; left: 0; }
+    .dpad-right { top: 53px; right: 0; }
+
+    .touch-hint-box {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.76);
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      color: #f1f5f9;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      max-width: 200px;
+      text-align: right;
+    }
+
+    /* Stars & Fact Card */
+    .stars-row {
+      font-size: 2.2rem;
+      margin: 4px 0;
+      letter-spacing: 6px;
+    }
+
+    .star-filled { color: var(--gold); text-shadow: 0 2px 8px rgba(245, 158, 11, 0.5); }
+    .star-empty { color: #cbd5e1; }
+
+    .fact-card {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-left: 5px solid var(--blue-mid);
+      border-radius: var(--radius-md);
+      padding: 11px 15px;
+      margin: 10px 0;
+      text-align: left;
+    }
+
+    .fact-card-title {
+      font-weight: 800;
+      font-size: 0.84rem;
+      color: var(--blue-mid);
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .fact-card-text {
+      font-size: 0.88rem;
+      color: #1e293b;
+      line-height: 1.4;
+    }
+
+    /* Mini Quiz Box for 6th Grade */
+    .quiz-card {
+      background: #fffbeb;
+      border: 2px solid #f59e0b;
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin: 10px 0;
+      text-align: left;
+    }
+
+    .quiz-question {
+      font-weight: 800;
+      font-size: 0.88rem;
+      color: #92400e;
+      margin-bottom: 7px;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .quiz-opt-btn {
+      background: var(--white);
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 11px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      cursor: pointer;
+    }
+
+    .quiz-opt-btn.correct {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #14532d;
+    }
+
+    .quiz-opt-btn.wrong {
+      background: #fee2e2;
+      border-color: #dc2626;
+      color: #7f1d1d;
+    }
+
+    .quiz-feedback {
+      font-size: 0.82rem;
+      font-weight: 800;
+      margin-top: 6px;
+      min-height: 1.2em;
+    }
+
+    .hero-certificate {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 3px solid var(--gold-dark);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin: 12px 0;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+    }
+
+    .hero-title-rank {
+      font-size: clamp(1.3rem, 3vw, 1.75rem);
+      font-weight: 900;
+      color: var(--red-primary);
+      margin: 6px 0;
+    }
+
+    .stats-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .stat-box {
+      background: var(--white);
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 9px;
+    }
+
+    .stat-box .val {
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: var(--blue-mid);
+    }
+
+    .stat-box .lbl {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    /* Live Banner Notification inside active game */
+    #liveBanner {
+      position: absolute;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 6;
+      background: rgba(15, 23, 42, 0.88);
+      color: var(--white);
+      border: 2px solid var(--gold);
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      white-space: nowrap;
+    }
+
+    #liveBanner.visible {
+      opacity: 1;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        padding: 16px 14px;
+      }
+      .btn-grid {
+        grid-template-columns: 1fr;
+      }
+      .btn-primary {
+        grid-column: span 1;
+      }
+      .stats-summary-grid {
+        grid-template-columns: 1fr;
+      }
+      .dpad {
+        width: 136px;
+        height: 136px;
+      }
+      .dpad-btn {
+        width: 44px;
+        height: 44px;
+      }
+      .dpad-up, .dpad-down { left: 46px; }
+      .dpad-left, .dpad-right { top: 46px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Reusable SVG Defs for Crisp Turkish Flag Icons -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <g id="tr-flag-graphic">
+        <rect width="36" height="24" rx="3" fill="#e30a17" />
+        <circle cx="13.5" cy="12" r="6" fill="#ffffff" />
+        <circle cx="15" cy="12" r="4.8" fill="#e30a17" />
+        <polygon points="22.5,12 19.4,13 20.6,10 20.6,14 19.4,11" fill="#ffffff" transform="rotate(18 21 12)" />
+        <polygon points="23,9.2 23.7,11.2 25.8,11.2 24.1,12.4 24.7,14.4 23,13.2 21.3,14.4 21.9,12.4 20.2,11.2 22.3,11.2" fill="#ffffff" transform="rotate(-18 23 12)" />
+      </g>
+    </defs>
+  </svg>
+
+  <div id="app">
+    <canvas id="gameCanvas" aria-label="Cumhuriyetin İzinde: Bayrak Avcısı Oyun Alanı"></canvas>
+
+    <!-- In-Game HUD (5. Aktif Oyun) -->
+    <header id="hud" aria-live="polite">
+      <div class="hud-group">
+        <div class="hud-chip" title="Aktif Seviye">
+          <span>✈️</span>
+          <span id="hudLevelName">1. İstanbul'un Gökyüzü</span>
+        </div>
+        <div class="hud-chip" title="Kalan Can">
+          <span>Can:</span>
+          <span id="hudLives" aria-label="Kalan Can">❤️❤️❤️</span>
+        </div>
+        <div class="hud-chip" title="Toplanan Türk Bayrağı ve Hedef">
+          <svg class="tr-flag-svg" viewBox="0 0 36 24" aria-hidden="true"><use href="#tr-flag-graphic"></use></svg>
+          <span>Hedef:</span>
+          <span id="hudFlags" class="highlight">0 / 10</span>
+          <span class="flag-progress-wrap" aria-hidden="true">
+            <span id="hudFlagBar" class="flag-progress-bar"></span>
+          </span>
+        </div>
+        <div class="hud-chip" title="Toplam Puan">
+          <span>⭐ Puan:</span>
+          <span id="hudScore" class="highlight">0</span>
+        </div>
+      </div>
+      <div class="hud-group">
+        <button type="button" id="hudSoundBtn" class="hud-btn" aria-label="Sesi Aç veya Kapat">🔊 Ses: Açık</button>
+        <button type="button" id="hudPauseBtn" class="hud-btn" aria-label="Oyunu Duraklat">⏸️ Duraklat (P)</button>
+      </div>
+    </header>
+
+    <div id="liveBanner" role="status" aria-live="polite"></div>
+
+    <!-- Touch Screen Controls -->
+    <div id="touchControls">
+      <div class="dpad" aria-label="Yön Kontrolleri">
+        <button type="button" class="dpad-btn dpad-up" data-dir="up" aria-label="Yukarı">▲</button>
+        <button type="button" class="dpad-btn dpad-left" data-dir="left" aria-label="Sola">◀</button>
+        <button type="button" class="dpad-btn dpad-right" data-dir="right" aria-label="Sağa">▶</button>
+        <button type="button" class="dpad-btn dpad-down" data-dir="down" aria-label="Aşağı">▼</button>
+      </div>
+      <div class="touch-hint-box">
+        📱 Yön tuşlarını kullanabilir veya uçağı parmağınızla sürükleyebilirsiniz.
+      </div>
+    </div>
+
+    <!-- 1. AÇILIŞ EKRANI -->
+    <section id="screen-start" class="screen-layer active" aria-labelledby="mainTitle">
+      <div class="panel">
+        <div class="panel-header-badge">
+          <svg class="tr-flag-svg" viewBox="0 0 36 24" aria-hidden="true"><use href="#tr-flag-graphic"></use></svg>
+          <span>29 Ekim Cumhuriyet Bayramı Özel Oyunu</span>
+        </div>
+        <h1 id="mainTitle" class="game-title">CUMHURİYETİN İZİNDE</h1>
+        <h2 class="game-subtitle">BAYRAK AVCISI</h2>
+
+        <!-- Canlı Giriş Animasyonu Sahnesi (Uçak, Türk Bayrakları ve Bulutlar) -->
+        <div class="intro-stage-wrap">
+          <canvas id="introCanvas" width="640" height="128" aria-label="Uçak, Türk bayrakları ve bulutlarla giriş animasyonu"></canvas>
+          <div class="intro-stage-caption">
+            Ay-yıldızlı uçağınla engellerden kaçın, her seviyede 10 Türk bayrağı topla ve “Cumhuriyetin Genç Kahramanı” ol!
+          </div>
+        </div>
+
+        <div class="status-pills">
+          <span class="status-pill" id="startAgeLabel">🎓 Yaş Grubu: Ortaokul (6. Sınıf)</span>
+          <span class="status-pill" id="startProgressLabel">🏅 Açık Seviye: 1 / 4</span>
+          <span class="status-pill" id="startMotionLabel">✨ Animasyon: Normal</span>
+        </div>
+
+        <div class="btn-grid">
+          <button type="button" id="btnStartGame" class="btn btn-primary">🚀 Oyuna Başla</button>
+          <button type="button" id="btnOpenLevels" class="btn btn-secondary">🗺️ Seviye Seçimi</button>
+          <button type="button" id="btnOpenHowTo" class="btn btn-secondary">📖 Nasıl Oynanır?</button>
+          <button type="button" id="btnOpenAge" class="btn btn-gold">🎯 Yaş Grubu / Zorluk Seçimi</button>
+          <button type="button" id="btnToggleSoundMain" class="btn btn-neutral">🔊 Ses: Açık</button>
+          <button type="button" id="btnToggleMotion" class="btn btn-neutral" style="grid-column: span 2;">🌿 Hareket Azaltma: Kapalı</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. NASIL OYNANIR? EKRANI -->
+    <section id="screen-howto" class="screen-layer" aria-labelledby="howToTitle">
+      <div class="panel">
+        <div class="panel-header-badge">📖 Oyun Rehberi</div>
+        <h2 id="howToTitle" class="section-title">Nasıl Oynanır?</h2>
+        <p class="lead-text">
+          Amacın her seviyede gökyüzünde beliren <strong>10 Türk bayrağını</strong> toplamak ve engellere çarpmadan hedefe ulaşmaktır!
+        </p>
+
+        <div class="how-to-grid">
+          <div class="info-box">
+            <h4>⌨️ Bilgisayar Kontrolleri</h4>
+            <p>
+              <strong>Ok Tuşları</strong> veya <strong>W, A, S, D</strong> tuşları ile uçağı yukarı, aşağı, sağa ve sola hareket ettir.<br/>
+              <strong>P</strong> veya <strong>Esc</strong> tuşu ile oyunu duraklat / devam ettir.
+            </p>
+          </div>
+          <div class="info-box">
+            <h4>📱 Dokunmatik Kontroller</h4>
+            <p>
+              Sol alttaki <strong>büyük yön butonlarını</strong> kullanabilir veya ekran üzerinde parmağını <strong>sürükleyerek</strong> uçağı yönlendirebilirsin.
+            </p>
+          </div>
+          <div class="info-box">
+            <h4>
+              <svg class="tr-flag-svg" viewBox="0 0 36 24" aria-hidden="true"><use href="#tr-flag-graphic"></use></svg>
+              <span>Bayraklar ve Puan</span>
+            </h4>
+            <p>
+              Her toplanan Türk bayrağı <strong>+10 puan</strong> kazandırır. Seviyeyi tamamlamak için <strong>10 bayrak</strong> toplamalısın.
+            </p>
+          </div>
+          <div class="info-box">
+            <h4>🎈 Engeller ve Can Sistemi</h4>
+            <p>
+              Oyuna <strong>3 can (❤️❤️❤️)</strong> ile başlarsın. <strong>Kayalara</strong> ve <strong>sıcak hava balonlarına</strong> çarpmaktan kaçın! Çarpışma sonrası kısa süreli koruma kalkanı devreye girer.
+            </p>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" id="btnHowToBack" class="btn btn-neutral">⬅️ Ana Menüye Dön</button>
+          <button type="button" id="btnHowToPlay" class="btn btn-primary" style="max-width: 260px;">🚀 Hemen Oyna</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. YAŞ GRUBU / ZORLUK SEÇİMİ EKRANI -->
+    <section id="screen-age" class="screen-layer" aria-labelledby="ageTitle">
+      <div class="panel">
+        <div class="panel-header-badge">🎯 Uyarlanabilir Zorluk</div>
+        <h2 id="ageTitle" class="section-title">Yaş Grubu / Zorluk Seçimi</h2>
+        <p class="lead-text">
+          Seçtiğin yaş grubu uçağın hızını, engel sıklığını, bayrak büyüklüğünü ve manevra kolaylığını gerçek zamanlı olarak değiştirir.
+        </p>
+
+        <div id="ageCardsContainer" class="cards-grid" role="radiogroup" aria-label="Yaş Grubu Seçenekleri">
+          <!-- Populated dynamically by JS -->
+        </div>
+
+        <div class="btn-row">
+          <button type="button" id="btnAgeBack" class="btn btn-neutral">⬅️ Ana Menüye Dön</button>
+          <button type="button" id="btnAgePlay" class="btn btn-primary" style="max-width: 260px;">✅ Seçimi Kaydet ve Oyna</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. SEVİYE SEÇİMİ EKRANI -->
+    <section id="screen-levels" class="screen-layer" aria-labelledby="levelsTitle">
+      <div class="panel">
+        <div class="panel-header-badge">🗺️ Uçuş Rotası</div>
+        <h2 id="levelsTitle" class="section-title">Seviye Seçimi</h2>
+        <p class="lead-text">
+          İstanbul'dan başlayıp Anadolu'yu aşarak Cumhuriyet yolunda geleceğe uç! Her seviyede 10 Türk bayrağı toplayarak bir sonraki rotanın kilidini aç.
+        </p>
+
+        <div id="levelCardsContainer" class="cards-grid">
+          <!-- Populated dynamically by JS -->
+        </div>
+
+        <div class="btn-row">
+          <button type="button" id="btnLevelsBack" class="btn btn-neutral">⬅️ Ana Menüye Dön</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. DURAKLATMA EKRANI -->
+    <section id="screen-pause" class="screen-layer" aria-labelledby="pauseTitle">
+      <div class="panel" style="max-width: 480px;">
+        <div class="panel-header-badge">⏸️ Oyun Duraklatıldı</div>
+        <h2 id="pauseTitle" class="section-title">Uçuş Molası</h2>
+        <p class="lead-text" id="pauseStatusText">
+          Seviye 1 — Toplanan Bayrak: 0 / 10 | Puan: 0
+        </p>
+
+        <div class="btn-grid">
+          <button type="button" id="btnResumeGame" class="btn btn-primary">▶️ Devam Et</button>
+          <button type="button" id="btnRestartFromPause" class="btn btn-secondary">🔄 Seviyeyi Yeniden Başlat</button>
+          <button type="button" id="btnToggleSoundPause" class="btn btn-neutral">🔊 Ses: Açık</button>
+          <button type="button" id="btnPauseToLevels" class="btn btn-neutral">🗺️ Seviye Seçimi</button>
+          <button type="button" id="btnPauseToMenu" class="btn btn-neutral" style="grid-column: span 2;">🏠 Ana Menüye Dön</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. SEVİYE TAMAMLANDI EKRANI -->
+    <section id="screen-level-complete" class="screen-layer" aria-labelledby="levelCompleteTitle">
+      <div class="panel" style="max-width: 620px;">
+        <div class="panel-header-badge">🎉 Görev Başarılı!</div>
+        <h2 id="levelCompleteTitle" class="section-title">Seviye Tamamlandı!</h2>
+        <div id="levelCompleteStars" class="stars-row" aria-label="Başarı Yıldızları">★★★</div>
+        <p class="lead-text" id="levelCompleteSummary" style="margin-bottom: 8px;">
+          10 Türk bayrağını başarıyla topladın!
+        </p>
+
+        <div class="stats-summary-grid">
+          <div class="stat-box">
+            <div class="val" id="lcFlagsVal">10 / 10</div>
+            <div class="lbl">Toplanan Bayrak</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="lcScoreVal">100</div>
+            <div class="lbl">Seviye Puanı</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="lcLivesVal">3 ❤️</div>
+            <div class="lbl">Kalan Can</div>
+          </div>
+        </div>
+
+        <div class="fact-card">
+          <div class="fact-card-title" id="lcFactTitle">📜 Cumhuriyet Tarihi Bilgi Notu (6. Sınıf)</div>
+          <div class="fact-card-text" id="lcFactText">
+            Cumhuriyet, egemenliğin kayıtsız şartsız millete ait olduğu yönetim biçimidir.
+          </div>
+        </div>
+
+        <!-- 6. Sınıf Etkileşimli Mini Bilgi Sorusu -->
+        <div class="quiz-card" id="lcQuizBox">
+          <div class="quiz-question" id="lcQuizQuestion">❓ 6. Sınıf Mini Soru:</div>
+          <div class="quiz-options" id="lcQuizOptions"></div>
+          <div class="quiz-feedback" id="lcQuizFeedback" aria-live="polite"></div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" id="btnNextLevel" class="btn btn-primary" style="max-width: 280px;">➡️ Sonraki Seviye</button>
+          <button type="button" id="btnReplayLevel" class="btn btn-secondary">🔄 Tekrar Oyna</button>
+          <button type="button" id="btnLcToMenu" class="btn btn-neutral">🏠 Ana Menü</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. OYUN BİTTİ EKRANI -->
+    <section id="screen-gameover" class="screen-layer" aria-labelledby="gameOverTitle">
+      <div class="panel" style="max-width: 520px;">
+        <div class="panel-header-badge">🛡️ Uçuş Kesintiye Uğradı</div>
+        <h2 id="gameOverTitle" class="section-title">Oyun Bitti</h2>
+        <p class="lead-text" id="gameOverReason">
+          Engellere çarptığın için tüm canların tükendi. Pes etmek yok, gökyüzü seni bekliyor!
+        </p>
+
+        <div class="stats-summary-grid">
+          <div class="stat-box">
+            <div class="val" id="goFlagsVal">0 / 10</div>
+            <div class="lbl">Toplanan Bayrak</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="goScoreVal">0</div>
+            <div class="lbl">Bu Seviye Puanı</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="goLevelVal">Seviye 1</div>
+            <div class="lbl">Uçuş Rotası</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" id="btnRetryLevel" class="btn btn-primary" style="max-width: 260px;">🔄 Yeniden Dene</button>
+          <button type="button" id="btnGoToLevels" class="btn btn-secondary">🗺️ Seviye Seçimi</button>
+          <button type="button" id="btnGoToMenu" class="btn btn-neutral">🏠 Ana Menü</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. BÜTÜN SEVİYELER TAMAMLANDI (FİNAL EKRANI) -->
+    <section id="screen-victory" class="screen-layer" aria-labelledby="victoryTitle">
+      <div class="panel" style="max-width: 650px;">
+        <div class="panel-header-badge">
+          🏆 29 Ekim Cumhuriyet Bayramımız Kutlu Olsun!
+        </div>
+        <h2 id="victoryTitle" class="section-title">Bütün Seviyeler Tamamlandı!</h2>
+
+        <div class="hero-certificate">
+          <div style="font-size: 2.2rem; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:4px;">
+            <span>🎖️</span>
+            <svg class="tr-flag-svg" style="width:48px; height:32px;" viewBox="0 0 36 24" aria-label="Türk Bayrağı"><use href="#tr-flag-graphic"></use></svg>
+            <span>⭐</span>
+          </div>
+          <div style="font-size: 0.86rem; font-weight: 800; color: #92400e; text-transform: uppercase;">Onur Unvanı Kazanıldı</div>
+          <div class="hero-title-rank">“Cumhuriyetin Genç Kahramanı”</div>
+          <p style="font-size: 0.92rem; color: #334155; margin-top: 4px;">
+            Gazi Mustafa Kemal Atatürk'ün <em>“İstikbal göklerdedir!”</em> sözünden ilham alarak dört rotanın tamamında şanlı bayrağımızı başarıyla topladın!
+          </p>
+        </div>
+
+        <div class="stats-summary-grid">
+          <div class="stat-box">
+            <div class="val" id="vicTotalScore">400</div>
+            <div class="lbl">Toplam Puan</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="vicTotalFlags">40</div>
+            <div class="lbl">Toplanan Bayrak</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="vicCompletedLevels">4 / 4</div>
+            <div class="lbl">Tamamlanan Seviye</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" id="btnPlayAgainAll" class="btn btn-primary" style="max-width: 260px;">🚀 Baştan Oyna (Seviye 1)</button>
+          <button type="button" id="btnVictoryLevels" class="btn btn-secondary">🗺️ Seviye Seçimi</button>
+          <button type="button" id="btnVictoryMenu" class="btn btn-neutral">🏠 Ana Menüye Dön</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* =========================================================================
+       * 1. SCORM 1.2 ADAPTER (EBA & LMS Uyumlu, Çevrimdışı Hata Vermez)
+       * ========================================================================= */
+      const ScormManager = {
+        api: null,
+        initialized: false,
+
+        findAPI(win) {
+          let attempts = 0;
+          try {
+            while (win && !win.API && win.parent && win.parent !== win && attempts < 10) {
+              attempts++;
+              win = win.parent;
+            }
+            if (win && win.API) return win.API;
+          } catch (e) {}
+          return null;
+        },
+
+        init() {
+          try {
+            this.api = this.findAPI(window) || (window.opener ? this.findAPI(window.opener) : null);
+            if (this.api && typeof this.api.LMSInitialize === "function") {
+              const res = this.api.LMSInitialize("");
+              this.initialized = (res === "true" || res === true);
+              if (this.initialized) {
+                const status = this.api.LMSGetValue("cmi.core.lesson_status");
+                if (!status || status === "not attempted") {
+                  this.api.LMSSetValue("cmi.core.lesson_status", "incomplete");
+                  this.api.LMSSetValue("cmi.core.score.min", "0");
+                  this.api.LMSSetValue("cmi.core.score.max", "400");
+                  this.api.LMSCommit("");
+                }
+              }
+            }
+          } catch (err) {
+            this.initialized = false;
+          }
+        },
+
+        reportProgress(totalScore, highestUnlockedLevel, allCompleted) {
+          if (!this.initialized || !this.api) return;
+          try {
+            const clampedScore = Math.min(400, Math.max(0, Math.round(totalScore)));
+            this.api.LMSSetValue("cmi.core.score.raw", String(clampedScore));
+            this.api.LMSSetValue("cmi.core.lesson_location", "level_" + highestUnlockedLevel);
+            if (allCompleted) {
+              this.api.LMSSetValue("cmi.core.lesson_status", "completed");
+            } else {
+              this.api.LMSSetValue("cmi.core.lesson_status", "incomplete");
+            }
+            this.api.LMSCommit("");
+          } catch (err) {}
+        },
+
+        finish() {
+          if (!this.initialized || !this.api) return;
+          try {
+            this.api.LMSCommit("");
+            this.api.LMSFinish("");
+            this.initialized = false;
+          } catch (err) {}
+        }
+      };
+
+      /* =========================================================================
+       * 2. WEB AUDIO API SES MOTORU (Harici Dosya Gerektirmez)
+       * ========================================================================= */
+      const SoundManager = {
+        ctx: null,
+        enabled: true,
+
+        initContext() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              this.ctx = new AudioCtx();
+            }
+          }
+          if (this.ctx && this.ctx.state === "suspended") {
+            this.ctx.resume().catch(() => {});
+          }
+        },
+
+        setEnabled(val) {
+          this.enabled = Boolean(val);
+          if (!this.enabled && this.ctx && this.ctx.state === "running") {
+            this.ctx.suspend().catch(() => {});
+          } else if (this.enabled && this.ctx && this.ctx.state === "suspended") {
+            this.ctx.resume().catch(() => {});
+          }
+        },
+
+        playTone(freq, type, duration, startTimeOffset = 0, gainVal = 0.14) {
+          if (!this.enabled) return;
+          try {
+            this.initContext();
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime + startTimeOffset;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            gain.gain.setValueAtTime(gainVal, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + duration);
+          } catch (e) {}
+        },
+
+        playClick() {
+          this.playTone(520, "sine", 0.08, 0, 0.1);
+        },
+
+        playFlagCollect() {
+          this.playTone(587.33, "triangle", 0.12, 0, 0.16);
+          this.playTone(880.00, "triangle", 0.22, 0.08, 0.18);
+        },
+
+        playHit() {
+          this.playTone(220, "sawtooth", 0.18, 0, 0.12);
+          this.playTone(165, "sine", 0.25, 0.1, 0.14);
+        },
+
+        playLevelComplete() {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((n, idx) => {
+            this.playTone(n, "triangle", 0.24, idx * 0.11, 0.16);
+          });
+        },
+
+        playGameOver() {
+          const notes = [392.00, 349.23, 329.63, 261.63];
+          notes.forEach((n, idx) => {
+            this.playTone(n, "sine", 0.22, idx * 0.14, 0.13);
+          });
+        },
+
+        playVictoryFanfare() {
+          const notes = [523.25, 659.25, 783.99, 659.25, 783.99, 1046.50];
+          const times = [0, 0.12, 0.24, 0.36, 0.48, 0.64];
+          notes.forEach((n, idx) => {
+            this.playTone(n, "triangle", 0.3, times[idx], 0.18);
+          });
+        }
+      };
+
+      /* =========================================================================
+       * 3. YAŞ GRUBU VE SEVİYE VERİLERİ
+       * ========================================================================= */
+      const AGE_GROUPS = {
+        okul_oncesi: {
+          id: "okul_oncesi",
+          name: "Okul Öncesi (4-6 Yaş)",
+          shortName: "Okul Öncesi",
+          badge: "Çok Kolay",
+          badgeClass: "badge-easy",
+          desc: "Yavaş uçuş hızı, büyük Türk bayrakları, seyrek engeller ve geniş güvenli koridorlar.",
+          speedMultiplier: 0.68,
+          spawnIntervalMultiplier: 1.45,
+          flagScale: 1.32,
+          obstacleScale: 0.85,
+          planeSpeed: 340,
+          swayAmplitude: 0.3
+        },
+        ilkokul: {
+          id: "ilkokul",
+          name: "İlkokul (1-4. Sınıf)",
+          shortName: "İlkokul",
+          badge: "Kolay",
+          badgeClass: "badge-easy",
+          desc: "Kolay kontrol, dengeli uçuş hızı, belirgin görsel geri bildirim ve rahat manevra alanı.",
+          speedMultiplier: 0.85,
+          spawnIntervalMultiplier: 1.2,
+          flagScale: 1.15,
+          obstacleScale: 0.92,
+          planeSpeed: 370,
+          swayAmplitude: 0.6
+        },
+        ortaokul: {
+          id: "ortaokul",
+          name: "Ortaokul (5-8. Sınıf / 6. Sınıf Önerilen)",
+          shortName: "Ortaokul (6. Sınıf)",
+          badge: "Orta • Önerilen",
+          badgeClass: "badge-medium",
+          desc: "6. sınıf seviyesine özel dengelenmiş hız, rüzgârda salınan sıcak hava balonları, farklı yükseklikte kayalar ve Cumhuriyet bilgi kartları.",
+          speedMultiplier: 1.0,
+          spawnIntervalMultiplier: 1.0,
+          flagScale: 1.0,
+          obstacleScale: 1.0,
+          planeSpeed: 400,
+          swayAmplitude: 1.0
+        },
+        lise: {
+          id: "lise",
+          name: "Lise (9-12. Sınıf)",
+          shortName: "Lise",
+          badge: "İleri",
+          badgeClass: "badge-expert",
+          desc: "Daha yüksek uçuş hızı, sıklaşan engeller ve dikkat gerektiren dinamik ama adil uçuş rotaları.",
+          speedMultiplier: 1.24,
+          spawnIntervalMultiplier: 0.82,
+          flagScale: 0.92,
+          obstacleScale: 1.06,
+          planeSpeed: 440,
+          swayAmplitude: 1.35
+        }
+      };
+
+      const LEVELS = [
+        {
+          id: 1,
+          name: "İstanbul'un Gökyüzü",
+          difficultyLabel: "Kolay",
+          badgeClass: "badge-easy",
+          targetFlags: 10,
+          baseSpeed: 230,
+          obstacleInterval: 1.95,
+          flagInterval: 1.55,
+          skyTop: "#0284c7",
+          skyBottom: "#bae6fd",
+          mountainColorFar: "#64748b",
+          mountainColorNear: "#334155",
+          groundColor: "#0f766e",
+          desc: "Boğaz'ın mavi suları, Kız Kulesi ve Galata Kulesi üzerinde Cumhuriyet uçuşuna başla!",
+          factTitle: "📜 6. Sınıf Cumhuriyet Bilgisi — İstanbul ve Milli Mücadele",
+          factText: "Milli Mücadele yıllarında İstanbul'dan Anadolu'ya uzanan bağımsızlık inancı, 29 Ekim 1923'te Cumhuriyet'in ilanıyla taçlanmıştır. İstanbul Boğazı ve tarihi yarımada, Cumhuriyet coşkusunun en görkemli kutlandığı simge mekânlardandır.",
+          quiz: {
+            q: "Cumhuriyetimiz hangi tarihte ilan edilmiştir?",
+            options: ["23 Nisan 1920", "29 Ekim 1923", "19 Mayıs 1919"],
+            answerIndex: 1
+          }
+        },
+        {
+          id: 2,
+          name: "Anadolu'nun Rüzgârı",
+          difficultyLabel: "Orta",
+          badgeClass: "badge-medium",
+          targetFlags: 10,
+          baseSpeed: 275,
+          obstacleInterval: 1.65,
+          flagInterval: 1.5,
+          skyTop: "#c2410c",
+          skyBottom: "#fde68a",
+          mountainColorFar: "#9a3412",
+          mountainColorNear: "#7c2d12",
+          groundColor: "#b45309",
+          desc: "Kapadokya'nın peri bacaları ve Erciyes Dağı eteklerinde sıcak hava balonları arasından süzül!",
+          factTitle: "📜 6. Sınıf Cumhuriyet Bilgisi — Anadolu'nun Birlik Ruhu",
+          factText: "Kurtuluş Savaşı'nda Anadolu'nun dört bir yanındaki şehirler ortak bir ideal etrafında birleşmiştir. Cumhuriyet, Anadolu insanının fedakârlığı ve bağımsızlık tutkusuyla yükselmiştir.",
+          quiz: {
+            q: "Cumhuriyet yönetiminde egemenlik kayıtsız şartsız kime aittir?",
+            options: ["Millete", "Yalnızca ordulara", "Belli bir zümreye"],
+            answerIndex: 0
+          }
+        },
+        {
+          id: 3,
+          name: "Cumhuriyet Yolunda",
+          difficultyLabel: "Zor",
+          badgeClass: "badge-hard",
+          targetFlags: 10,
+          baseSpeed: 320,
+          obstacleInterval: 1.4,
+          flagInterval: 1.45,
+          skyTop: "#312e81",
+          skyBottom: "#f43f5e",
+          mountainColorFar: "#4c1d95",
+          mountainColorNear: "#1e1b4b",
+          groundColor: "#3730a3",
+          desc: "Başkent Ankara semalarında İlk Meclis ve Anıtkabir silüeti eşliğinde zorlu engelleri aş!",
+          factTitle: "📜 6. Sınıf Cumhuriyet Bilgisi — 29 Ekim 1923 ve Ankara",
+          factText: "23 Nisan 1920'de Ankara'da açılan Türkiye Büyük Millet Meclisi, millet egemenliğinin temeli olmuş; 29 Ekim 1923'te Gazi Mustafa Kemal Atatürk önderliğinde Cumhuriyet ilan edilerek Türk milletinin çağdaş yönetim şekli belirlenmiştir.",
+          quiz: {
+            q: "Türkiye Cumhuriyeti'nin ilk Cumhurbaşkanı kimdir?",
+            options: ["İsmet İnönü", "Kazım Karabekir", "Gazi Mustafa Kemal Atatürk"],
+            answerIndex: 2
+          }
+        },
+        {
+          id: 4,
+          name: "Geleceğe Uçuş",
+          difficultyLabel: "İleri",
+          badgeClass: "badge-expert",
+          targetFlags: 10,
+          baseSpeed: 365,
+          obstacleInterval: 1.2,
+          flagInterval: 1.4,
+          skyTop: "#090d16",
+          skyBottom: "#1e3a8a",
+          mountainColorFar: "#1e293b",
+          mountainColorNear: "#0f172a",
+          groundColor: "#172554",
+          desc: "Yıldızlı Cumhuriyet gecesinde yüksek hızda uçarak 4. seviyeyi bitir ve Genç Kahraman unvanını al!",
+          factTitle: "📜 6. Sınıf Cumhuriyet Bilgisi — “İstikbal Göklerdedir!”",
+          factText: "Atatürk, Cumhuriyet'i gençlere emanet etmiş ve 'İstikbal göklerdedir' diyerek bilim, teknoloji ve havacılıkta ilerlemenin önemini vurgulamıştır. Cumhuriyetin geleceği, bilimin ışığında yürüyen genç kahramanların elindedir!",
+          quiz: {
+            q: "Atatürk'ün havacılığın önemini vurgulayan ünlü sözü hangisidir?",
+            options: ["İstikbal göklerdedir!", "Ordular ilk hedefiniz Akdeniz'dir!", "Hayatta en hakiki mürşit ilimdir."],
+            answerIndex: 0
+          }
+        }
+      ];
+
+      /* =========================================================================
+       * 4. OYUN DURUMU (STATE) VE KALICI KAYIT
+       * ========================================================================= */
+      const STORAGE_KEY = "cumhuriyet_bayrak_avcisi_save_v1";
+
+      const GameState = {
+        screen: "start",
+        ageGroupKey: "ortaokul",
+        soundEnabled: true,
+        reducedMotion: false,
+        currentLevelIndex: 0,
+        highestUnlockedLevel: 1,
+        levelStars: { 1: 0, 2: 0, 3: 0, 4: 0 },
+        levelBestScores: { 1: 0, 2: 0, 3: 0, 4: 0 },
+
+        score: 0,
+        totalCampaignScore: 0,
+        totalCampaignFlags: 0,
+        collectedFlags: 0,
+        targetFlags: 10,
+        lives: 3,
+        maxLives: 3,
+        elapsedLevelTime: 0,
+        invulnerableTimer: 0,
+        obstacleSpawnTimer: 0,
+        flagSpawnTimer: 0,
+        bannerTimer: 0,
+
+        plane: {
+          x: 140,
+          y: 260,
+          width: 84,
+          height: 44,
+          vx: 0,
+          vy: 0,
+          pitch: 0,
+          propellerAngle: 0
+        },
+        flags: [],
+        obstacles: [],
+        particles: [],
+        floatingTexts: [],
+        bgScroll: 0,
+        clouds: [],
+        stars: []
+      };
+
+      function loadProgress() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            if (parsed.ageGroupKey && AGE_GROUPS[parsed.ageGroupKey]) {
+              GameState.ageGroupKey = parsed.ageGroupKey;
+            }
+            if (typeof parsed.soundEnabled === "boolean") {
+              GameState.soundEnabled = parsed.soundEnabled;
+              SoundManager.setEnabled(parsed.soundEnabled);
+            }
+            if (typeof parsed.reducedMotion === "boolean") {
+              GameState.reducedMotion = parsed.reducedMotion;
+            }
+            if (typeof parsed.highestUnlockedLevel === "number") {
+              GameState.highestUnlockedLevel = Math.max(1, Math.min(4, parsed.highestUnlockedLevel));
+            }
+            if (parsed.levelStars && typeof parsed.levelStars === "object") {
+              for (let i = 1; i <= 4; i++) {
+                GameState.levelStars[i] = Number(parsed.levelStars[i]) || 0;
+              }
+            }
+            if (parsed.levelBestScores && typeof parsed.levelBestScores === "object") {
+              for (let i = 1; i <= 4; i++) {
+                GameState.levelBestScores[i] = Number(parsed.levelBestScores[i]) || 0;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
+      function saveProgress() {
+        try {
+          const payload = {
+            ageGroupKey: GameState.ageGroupKey,
+            soundEnabled: GameState.soundEnabled,
+            reducedMotion: GameState.reducedMotion,
+            highestUnlockedLevel: GameState.highestUnlockedLevel,
+            levelStars: GameState.levelStars,
+            levelBestScores: GameState.levelBestScores
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        } catch (e) {}
+      }
+
+      /* =========================================================================
+       * 5. DOM REFERANSLARI VE EKRAN YÖNETİMİ
+       * ========================================================================= */
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const introCanvas = document.getElementById("introCanvas");
+      const introCtx = introCanvas ? introCanvas.getContext("2d") : null;
+
+      const screens = {
+        start: document.getElementById("screen-start"),
+        howto: document.getElementById("screen-howto"),
+        age: document.getElementById("screen-age"),
+        levels: document.getElementById("screen-levels"),
+        paused: document.getElementById("screen-pause"),
+        level_complete: document.getElementById("screen-level-complete"),
+        gameover: document.getElementById("screen-gameover"),
+        victory: document.getElementById("screen-victory")
+      };
+
+      const hud = document.getElementById("hud");
+      const touchControls = document.getElementById("touchControls");
+      const liveBanner = document.getElementById("liveBanner");
+
+      function showBanner(msg, duration = 2.2) {
+        liveBanner.textContent = msg;
+        liveBanner.classList.add("visible");
+        GameState.bannerTimer = duration;
+      }
+
+      function showScreen(screenName) {
+        GameState.screen = screenName;
+        Object.keys(screens).forEach((key) => {
+          screens[key].classList.toggle("active", key === screenName);
+        });
+
+        const isActivePlay = (screenName === "playing");
+        const isPaused = (screenName === "paused");
+        hud.classList.toggle("active", isActivePlay || isPaused);
+        touchControls.classList.toggle("active", isActivePlay);
+        if (!isActivePlay) {
+          liveBanner.classList.remove("visible");
+          GameState.bannerTimer = 0;
+        }
+
+        if (screenName === "start") {
+          updateStartScreenUI();
+        } else if (screenName === "age") {
+          renderAgeCards();
+        } else if (screenName === "levels") {
+          renderLevelCards();
+        }
+      }
+
+      function updateSoundButtonsUI() {
+        const label = GameState.soundEnabled ? "🔊 Ses: Açık" : "🔇 Ses: Kapalı";
+        document.getElementById("btnToggleSoundMain").textContent = label;
+        document.getElementById("hudSoundBtn").textContent = label;
+        document.getElementById("btnToggleSoundPause").textContent = label;
+      }
+
+      function updateMotionButtonUI() {
+        const btn = document.getElementById("btnToggleMotion");
+        btn.textContent = GameState.reducedMotion
+          ? "🌿 Hareket Azaltma: Açık"
+          : "🌿 Hareket Azaltma: Kapalı";
+        document.getElementById("startMotionLabel").textContent = GameState.reducedMotion
+          ? "✨ Animasyon: Azaltılmış"
+          : "✨ Animasyon: Normal";
+      }
+
+      function updateStartScreenUI() {
+        const ageObj = AGE_GROUPS[GameState.ageGroupKey];
+        document.getElementById("startAgeLabel").textContent = "🎓 Yaş Grubu: " + ageObj.shortName;
+        document.getElementById("startProgressLabel").textContent = "🏅 Açık Seviye: " + GameState.highestUnlockedLevel + " / 4";
+        updateSoundButtonsUI();
+        updateMotionButtonUI();
+      }
+
+      function renderAgeCards() {
+        const container = document.getElementById("ageCardsContainer");
+        container.innerHTML = "";
+        Object.values(AGE_GROUPS).forEach((group) => {
+          const isSelected = group.id === GameState.ageGroupKey;
+          const card = document.createElement("div");
+          card.className = "choice-card" + (isSelected ? " selected" : "");
+          card.setAttribute("role", "radio");
+          card.setAttribute("aria-checked", isSelected ? "true" : "false");
+          card.tabIndex = 0;
+
+          card.innerHTML = `
+            <div>
+              <div class="card-top">
+                <span class="card-title">${group.name}</span>
+                <span class="card-badge ${group.badgeClass}">${group.badge}</span>
+              </div>
+              <p class="card-desc" style="margin-top:6px;">${group.desc}</p>
+            </div>
+            <div class="card-meta">
+              <span>Hız: %${Math.round(group.speedMultiplier * 100)}</span>
+              <span>${isSelected ? "✅ Seçili" : "Seçmek için tıkla"}</span>
+            </div>
+          `;
+
+          const selectHandler = () => {
+            SoundManager.playClick();
+            GameState.ageGroupKey = group.id;
+            saveProgress();
+            renderAgeCards();
+          };
+
+          card.addEventListener("click", selectHandler);
+          card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              selectHandler();
+            }
+          });
+          container.appendChild(card);
+        });
+      }
+
+      function renderLevelCards() {
+        const container = document.getElementById("levelCardsContainer");
+        container.innerHTML = "";
+
+        LEVELS.forEach((lvl, idx) => {
+          const isUnlocked = lvl.id <= GameState.highestUnlockedLevel;
+          const stars = GameState.levelStars[lvl.id] || 0;
+          const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
+
+          const card = document.createElement("div");
+          card.className = "choice-card" + (isUnlocked ? "" : " locked");
+          card.tabIndex = isUnlocked ? 0 : -1;
+          card.setAttribute("data-level-id", String(lvl.id));
+
+          card.innerHTML = `
+            <div>
+              <div class="card-top">
+                <span class="card-title">${lvl.id}. ${lvl.name}</span>
+                <span class="card-badge ${lvl.badgeClass}">${lvl.difficultyLabel}</span>
+              </div>
+              <p class="card-desc" style="margin-top:6px;">${lvl.desc}</p>
+            </div>
+            <div class="card-meta">
+              <span>Hedef: ${lvl.targetFlags} Bayrak | Başarı: ${starStr}</span>
+              <span>${isUnlocked ? "▶️ Oyna" : "🔒 Kilitli"}</span>
+            </div>
+          `;
+
+          if (isUnlocked) {
+            const playLvl = () => {
+              SoundManager.playClick();
+              startLevel(idx);
+            };
+            card.addEventListener("click", playLvl);
+            card.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                playLvl();
+              }
+            });
+          }
+          container.appendChild(card);
+        });
+      }
+
+      function renderMiniQuiz(lvl) {
+        const qBox = document.getElementById("lcQuizQuestion");
+        const optsContainer = document.getElementById("lcQuizOptions");
+        const feedback = document.getElementById("lcQuizFeedback");
+
+        if (!lvl.quiz) return;
+        qBox.textContent = "❓ 6. Sınıf Mini Soru: " + lvl.quiz.q;
+        optsContainer.innerHTML = "";
+        feedback.textContent = "";
+        feedback.style.color = "#1e293b";
+
+        lvl.quiz.options.forEach((optText, idx) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "quiz-opt-btn";
+          btn.textContent = optText;
+          btn.addEventListener("click", () => {
+            if (idx === lvl.quiz.answerIndex) {
+              SoundManager.playFlagCollect();
+              btn.classList.add("correct");
+              feedback.style.color = "#15803d";
+              feedback.textContent = "✅ Tebrikler! Doğru cevap!";
+            } else {
+              SoundManager.playClick();
+              btn.classList.add("wrong");
+              feedback.style.color = "#b91c1c";
+              feedback.textContent = "💡 Tekrar düşün! Doğru cevabı bulabilirsin.";
+            }
+          });
+          optsContainer.appendChild(btn);
+        });
+      }
+
+      /* =========================================================================
+       * 6. KONTROLLER (KLAVYE, D-PAD VE DOKUNMATİK SÜRÜKLEME)
+       * ========================================================================= */
+      const InputState = {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        pointerActive: false,
+        pointerTargetX: null,
+        pointerTargetY: null
+      };
+
+      function clearInputs() {
+        InputState.up = false;
+        InputState.down = false;
+        InputState.left = false;
+        InputState.right = false;
+        InputState.pointerActive = false;
+        InputState.pointerTargetX = null;
+        InputState.pointerTargetY = null;
+        document.querySelectorAll(".dpad-btn").forEach((b) => b.classList.remove("pressed"));
+      }
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "p" || e.key === "P" || e.key === "Escape") {
+          if (GameState.screen === "playing") {
+            e.preventDefault();
+            pauseGame();
+            return;
+          } else if (GameState.screen === "paused") {
+            e.preventDefault();
+            resumeGame();
+            return;
+          }
+        }
+
+        if (GameState.screen !== "playing") return;
+
+        switch (e.key) {
+          case "ArrowUp":
+          case "w":
+          case "W":
+            InputState.up = true;
+            e.preventDefault();
+            break;
+          case "ArrowDown":
+          case "s":
+          case "S":
+            InputState.down = true;
+            e.preventDefault();
+            break;
+          case "ArrowLeft":
+          case "a":
+          case "A":
+            InputState.left = true;
+            e.preventDefault();
+            break;
+          case "ArrowRight":
+          case "d":
+          case "D":
+            InputState.right = true;
+            e.preventDefault();
+            break;
+        }
+      });
+
+      window.addEventListener("keyup", (e) => {
+        switch (e.key) {
+          case "ArrowUp":
+          case "w":
+          case "W":
+            InputState.up = false;
+            break;
+          case "ArrowDown":
+          case "s":
+          case "S":
+            InputState.down = false;
+            break;
+          case "ArrowLeft":
+          case "a":
+          case "A":
+            InputState.left = false;
+            break;
+          case "ArrowRight":
+          case "d":
+          case "D":
+            InputState.right = false;
+            break;
+        }
+      });
+
+      document.querySelectorAll(".dpad-btn").forEach((btn) => {
+        const dir = btn.getAttribute("data-dir");
+        const press = (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (GameState.screen !== "playing") return;
+          InputState[dir] = true;
+          btn.classList.add("pressed");
+        };
+        const release = (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          InputState[dir] = false;
+          btn.classList.remove("pressed");
+        };
+
+        btn.addEventListener("pointerdown", press);
+        btn.addEventListener("pointerup", release);
+        btn.addEventListener("pointerleave", release);
+        btn.addEventListener("pointercancel", release);
+      });
+
+      canvas.addEventListener("pointerdown", (e) => {
+        if (GameState.screen !== "playing") return;
+        e.preventDefault();
+        InputState.pointerActive = true;
+        InputState.pointerTargetX = e.clientX;
+        InputState.pointerTargetY = e.clientY;
+      });
+
+      canvas.addEventListener("pointermove", (e) => {
+        if (!InputState.pointerActive || GameState.screen !== "playing") return;
+        e.preventDefault();
+        InputState.pointerTargetX = e.clientX;
+        InputState.pointerTargetY = e.clientY;
+      });
+
+      window.addEventListener("pointerup", () => {
+        InputState.pointerActive = false;
+      });
+
+      window.addEventListener("pointercancel", () => {
+        InputState.pointerActive = false;
+      });
+
+      /* =========================================================================
+       * 7. OYUN MEKANİĞİ VE SEVİYE BAŞLATMA / SIFIRLAMA
+       * ========================================================================= */
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        initAtmosphere();
+        clampPlaneToBounds();
+      }
+
+      function initAtmosphere() {
+        const w = canvas.width;
+        const h = canvas.height;
+        if (GameState.clouds.length === 0) {
+          for (let i = 0; i < 8; i++) {
+            GameState.clouds.push({
+              x: Math.random() * w,
+              y: 55 + Math.random() * (h * 0.55),
+              scale: 0.65 + Math.random() * 0.85,
+              speed: 18 + Math.random() * 28,
+              alpha: 0.55 + Math.random() * 0.35
+            });
+          }
+        }
+        if (GameState.stars.length === 0) {
+          for (let i = 0; i < 45; i++) {
+            GameState.stars.push({
+              x: Math.random() * w,
+              y: Math.random() * (h * 0.7),
+              r: 1 + Math.random() * 2,
+              phase: Math.random() * Math.PI * 2
+            });
+          }
+        }
+      }
+
+      function clampPlaneToBounds() {
+        const p = GameState.plane;
+        const topMargin = 66;
+        const bottomMargin = 24;
+        const leftMargin = 16;
+        const rightMargin = Math.max(leftMargin + 20, canvas.width - p.width - 16);
+        const maxBottom = Math.max(topMargin + 20, canvas.height - p.height - bottomMargin);
+
+        if (p.x < leftMargin) p.x = leftMargin;
+        if (p.x > rightMargin) p.x = rightMargin;
+        if (p.y < topMargin) p.y = topMargin;
+        if (p.y > maxBottom) p.y = maxBottom;
+      }
+
+      function updateHUD() {
+        const lvl = LEVELS[GameState.currentLevelIndex];
+        document.getElementById("hudLevelName").textContent = `${lvl.id}. ${lvl.name}`;
+        const hearts = "❤️".repeat(Math.max(0, GameState.lives)) + "🖤".repeat(Math.max(0, GameState.maxLives - GameState.lives));
+        document.getElementById("hudLives").textContent = hearts;
+        document.getElementById("hudFlags").textContent = `${GameState.collectedFlags} / ${GameState.targetFlags}`;
+        const pct = Math.min(100, Math.round((GameState.collectedFlags / GameState.targetFlags) * 100));
+        document.getElementById("hudFlagBar").style.width = pct + "%";
+        document.getElementById("hudScore").textContent = String(GameState.score);
+      }
+
+      function startLevel(levelIndex, resetCampaignTotals = false) {
+        SoundManager.initContext();
+        clearInputs();
+
+        GameState.currentLevelIndex = Math.max(0, Math.min(LEVELS.length - 1, levelIndex));
+        const lvl = LEVELS[GameState.currentLevelIndex];
+
+        if (resetCampaignTotals || levelIndex === 0) {
+          GameState.totalCampaignScore = 0;
+          GameState.totalCampaignFlags = 0;
+        }
+
+        GameState.score = 0;
+        GameState.collectedFlags = 0;
+        GameState.targetFlags = lvl.targetFlags;
+        GameState.lives = 3;
+        GameState.elapsedLevelTime = 0;
+        GameState.invulnerableTimer = 0;
+        GameState.obstacleSpawnTimer = 1.1;
+        GameState.flagSpawnTimer = 0.6;
+
+        GameState.flags = [];
+        GameState.obstacles = [];
+        GameState.particles = [];
+        GameState.floatingTexts = [];
+
+        GameState.plane.x = Math.min(130, Math.max(24, canvas.width * 0.14));
+        GameState.plane.y = canvas.height * 0.46;
+        GameState.plane.vx = 0;
+        GameState.plane.vy = 0;
+        GameState.plane.pitch = 0;
+
+        clampPlaneToBounds();
+        updateHUD();
+        showScreen("playing");
+        showBanner(`✈️ Seviye ${lvl.id}: ${lvl.name} — Hedef: ${lvl.targetFlags} Türk Bayrağı!`, 2.6);
+      }
+
+      function pauseGame() {
+        if (GameState.screen !== "playing") return;
+        SoundManager.playClick();
+        clearInputs();
+        const lvl = LEVELS[GameState.currentLevelIndex];
+        document.getElementById("pauseStatusText").textContent =
+          `Seviye ${lvl.id}: ${lvl.name} — Bayrak: ${GameState.collectedFlags} / ${GameState.targetFlags} | Puan: ${GameState.score}`;
+        showScreen("paused");
+      }
+
+      function resumeGame() {
+        if (GameState.screen !== "paused") return;
+        SoundManager.playClick();
+        clearInputs();
+        showScreen("playing");
+      }
+
+      /* =========================================================================
+       * 8. ADİL NESNE ÜRETİMİ (BAYRAKLAR, KAYALAR VE SICAK HAVA BALONLARI)
+       * ========================================================================= */
+      function getSafePlayVerticalRange() {
+        const minY = 82;
+        const maxY = Math.max(minY + 140, canvas.height - 95);
+        return { minY, maxY };
+      }
+
+      function spawnFlag() {
+        const age = AGE_GROUPS[GameState.ageGroupKey];
+        const { minY, maxY } = getSafePlayVerticalRange();
+        const w = Math.round(54 * age.flagScale);
+        const h = Math.round(36 * age.flagScale);
+
+        let chosenY = minY + Math.random() * (maxY - minY - h);
+        const spawnX = canvas.width + 50;
+
+        for (let attempt = 0; attempt < 6; attempt++) {
+          const candidateY = minY + Math.random() * (maxY - minY - h);
+          const overlapsObstacle = GameState.obstacles.some((obs) => {
+            const dx = Math.abs((obs.x + obs.width / 2) - (spawnX + w / 2));
+            const dy = Math.abs((obs.y + obs.height / 2) - (candidateY + h / 2));
+            return dx < 130 && dy < 95;
+          });
+          if (!overlapsObstacle) {
+            chosenY = candidateY;
+            break;
+          }
+        }
+
+        GameState.flags.push({
+          x: spawnX,
+          y: chosenY,
+          baseY: chosenY,
+          width: w,
+          height: h,
+          collected: false,
+          wavePhase: Math.random() * Math.PI * 2
+        });
+      }
+
+      function spawnObstacle() {
+        const lvl = LEVELS[GameState.currentLevelIndex];
+        const age = AGE_GROUPS[GameState.ageGroupKey];
+        const { minY, maxY } = getSafePlayVerticalRange();
+        const playableHeight = maxY - minY;
+
+        const minHorizontalGap = Math.max(195, 250 / age.speedMultiplier);
+        const rightmostObstacle = GameState.obstacles.reduce((max, o) => Math.max(max, o.x), -9999);
+        if (canvas.width + 60 - rightmostObstacle < minHorizontalGap) {
+          return;
+        }
+
+        const type = Math.random() < 0.52 ? "balloon" : "rock";
+        const scale = age.obstacleScale;
+        const width = Math.round((type === "balloon" ? 58 : 64) * scale);
+        const height = Math.round((type === "balloon" ? 76 : 60) * scale);
+
+        let y = minY + Math.random() * Math.max(20, playableHeight - height);
+        const lastObs = GameState.obstacles[GameState.obstacles.length - 1];
+        if (lastObs && Math.abs(lastObs.y - y) < 110) {
+          if (lastObs.y > (minY + maxY) / 2) {
+            y = minY + 12 + Math.random() * Math.max(20, (playableHeight * 0.4) - height);
+          } else {
+            y = minY + playableHeight * 0.55 + Math.random() * Math.max(20, (playableHeight * 0.4) - height);
+          }
+          y = Math.max(minY, Math.min(maxY - height, y));
+        }
+
+        const palette = [
+          ["#f97316", "#fde047"],
+          ["#8b5cf6", "#f472b6"],
+          ["#10b981", "#fef08a"],
+          ["#06b6d4", "#fed7aa"]
+        ];
+        const colors = palette[Math.floor(Math.random() * palette.length)];
+
+        GameState.obstacles.push({
+          type,
+          x: canvas.width + 60,
+          y,
+          baseY: y,
+          width,
+          height,
+          hit: false,
+          swayPhase: Math.random() * Math.PI * 2,
+          swaySpeed: 1.6 + Math.random() * 1.1,
+          swayRange: type === "balloon" ? (14 * age.swayAmplitude * (1 + lvl.id * 0.1)) : (5 * age.swayAmplitude),
+          colors
+        });
+      }
+
+      /* =========================================================================
+       * 9. ÇARPIŞMA ALGILAMA VE OYUN DÖNGÜSÜ GÜNCELLEMESİ
+       * ========================================================================= */
+      function rectsIntersect(ax, ay, aw, ah, bx, by, bw, bh) {
+        return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+      }
+
+      function addFloatingText(x, y, text, color) {
+        GameState.floatingTexts.push({
+          x,
+          y,
+          text,
+          color,
+          life: 1.0
+        });
+      }
+
+      function addBurstParticles(x, y, color) {
+        if (GameState.reducedMotion) return;
+        for (let i = 0; i < 12; i++) {
+          const angle = (Math.PI * 2 * i) / 12 + Math.random() * 0.3;
+          const speed = 60 + Math.random() * 120;
+          GameState.particles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            r: 3 + Math.random() * 3,
+            color,
+            life: 0.55 + Math.random() * 0.25
+          });
+        }
+      }
+
+      function handleFlagCollected(flag) {
+        if (flag.collected) return;
+        flag.collected = true;
+
+        GameState.collectedFlags += 1;
+        GameState.score += 10;
+        SoundManager.playFlagCollect();
+
+        addBurstParticles(flag.x + flag.width / 2, flag.y + flag.height / 2, "#fbbf24");
+        addFloatingText(flag.x, flag.y - 8, "+10 PUAN ★", "#fde047");
+        updateHUD();
+
+        if (GameState.collectedFlags >= GameState.targetFlags) {
+          completeCurrentLevel();
+        }
+      }
+
+      function handleObstacleCollision(obs) {
+        if (obs.hit || GameState.invulnerableTimer > 0) return;
+        obs.hit = true;
+        GameState.lives = Math.max(0, GameState.lives - 1);
+        GameState.invulnerableTimer = 1.6;
+        SoundManager.playHit();
+
+        addBurstParticles(GameState.plane.x + GameState.plane.width / 2, GameState.plane.y + GameState.plane.height / 2, "#f87171");
+        addFloatingText(GameState.plane.x, GameState.plane.y - 14, "DİKKAT! -1 CAN 🛡️", "#fca5a5");
+        updateHUD();
+
+        if (GameState.lives <= 0) {
+          triggerGameOver();
+        } else {
+          showBanner(`⚠️ Engele çarptın! Kalan Can: ${GameState.lives} — Koruma kalkanı aktif!`, 1.6);
+        }
+      }
+
+      function completeCurrentLevel() {
+        clearInputs();
+        const lvl = LEVELS[GameState.currentLevelIndex];
+
+        const earnedStars = Math.max(1, Math.min(3, GameState.lives));
+        GameState.levelStars[lvl.id] = Math.max(GameState.levelStars[lvl.id] || 0, earnedStars);
+        GameState.levelBestScores[lvl.id] = Math.max(GameState.levelBestScores[lvl.id] || 0, GameState.score);
+
+        GameState.totalCampaignScore += GameState.score;
+        GameState.totalCampaignFlags += GameState.collectedFlags;
+
+        const isFinalLevel = (lvl.id === LEVELS.length);
+        if (!isFinalLevel && GameState.highestUnlockedLevel < lvl.id + 1) {
+          GameState.highestUnlockedLevel = lvl.id + 1;
+        }
+
+        saveProgress();
+        ScormManager.reportProgress(
+          Object.values(GameState.levelBestScores).reduce((a, b) => a + b, 0),
+          GameState.highestUnlockedLevel,
+          isFinalLevel
+        );
+
+        if (isFinalLevel) {
+          SoundManager.playVictoryFanfare();
+          const bestSum = Object.values(GameState.levelBestScores).reduce((a, b) => a + b, 0);
+          document.getElementById("vicTotalScore").textContent = String(Math.max(GameState.totalCampaignScore, bestSum));
+          document.getElementById("vicTotalFlags").textContent = String(Math.max(GameState.totalCampaignFlags, 40));
+          document.getElementById("vicCompletedLevels").textContent = "4 / 4";
+          showScreen("victory");
+        } else {
+          SoundManager.playLevelComplete();
+          const starHtml =
+            `<span class="star-filled">${"★".repeat(earnedStars)}</span>` +
+            `<span class="star-empty">${"★".repeat(3 - earnedStars)}</span>`;
+          document.getElementById("levelCompleteStars").innerHTML = starHtml;
+          document.getElementById("levelCompleteSummary").textContent =
+            `${lvl.id}. Seviye (${lvl.name}) başarıyla tamamlandı! Yeni uçuş rotasının kilidi açıldı.`;
+          document.getElementById("lcFlagsVal").textContent = `${GameState.collectedFlags} / ${GameState.targetFlags}`;
+          document.getElementById("lcScoreVal").textContent = String(GameState.score);
+          document.getElementById("lcLivesVal").textContent = `${GameState.lives} ❤️`;
+          document.getElementById("lcFactTitle").textContent = lvl.factTitle;
+          document.getElementById("lcFactText").textContent = lvl.factText;
+          renderMiniQuiz(lvl);
+          showScreen("level_complete");
+        }
+      }
+
+      function triggerGameOver() {
+        clearInputs();
+        SoundManager.playGameOver();
+        const lvl = LEVELS[GameState.currentLevelIndex];
+        document.getElementById("goFlagsVal").textContent = `${GameState.collectedFlags} / ${GameState.targetFlags}`;
+        document.getElementById("goScoreVal").textContent = String(GameState.score);
+        document.getElementById("goLevelVal").textContent = `Seviye ${lvl.id}`;
+        showScreen("gameover");
+      }
+
+      function updateGame(dt) {
+        const lvl = LEVELS[GameState.currentLevelIndex];
+        const age = AGE_GROUPS[GameState.ageGroupKey];
+
+        GameState.elapsedLevelTime += dt;
+
+        const timeProgression = Math.min(0.18, GameState.elapsedLevelTime * 0.0045);
+        const scrollSpeed = lvl.baseSpeed * age.speedMultiplier * (1 + timeProgression);
+
+        const bgFactor = GameState.reducedMotion ? 0.35 : 1.0;
+        GameState.bgScroll = (GameState.bgScroll + scrollSpeed * dt * bgFactor) % 2400;
+
+        if (GameState.invulnerableTimer > 0) {
+          GameState.invulnerableTimer = Math.max(0, GameState.invulnerableTimer - dt);
+        }
+
+        if (GameState.bannerTimer > 0) {
+          GameState.bannerTimer -= dt;
+          if (GameState.bannerTimer <= 0) {
+            liveBanner.classList.remove("visible");
+          }
+        }
+
+        const p = GameState.plane;
+        const moveSpeed = age.planeSpeed;
+        let dx = 0;
+        let dy = 0;
+
+        if (InputState.left) dx -= 1;
+        if (InputState.right) dx += 1;
+        if (InputState.up) dy -= 1;
+        if (InputState.down) dy += 1;
+
+        if (InputState.pointerActive && InputState.pointerTargetX !== null && InputState.pointerTargetY !== null) {
+          const centerX = p.x + p.width / 2;
+          const centerY = p.y + p.height / 2;
+          const diffX = InputState.pointerTargetX - centerX;
+          const diffY = InputState.pointerTargetY - centerY;
+          const dist = Math.hypot(diffX, diffY);
+          if (dist > 8) {
+            dx = diffX / Math.max(dist, 45);
+            dy = diffY / Math.max(dist, 45);
+          }
+        } else if (dx !== 0 && dy !== 0) {
+          const inv = 1 / Math.SQRT2;
+          dx *= inv;
+          dy *= inv;
+        }
+
+        p.vx = dx * moveSpeed;
+        p.vy = dy * moveSpeed;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.pitch = dy * 0.22;
+        p.propellerAngle = (p.propellerAngle + dt * 28) % (Math.PI * 2);
+
+        clampPlaneToBounds();
+
+        GameState.flagSpawnTimer -= dt;
+        if (GameState.flagSpawnTimer <= 0) {
+          spawnFlag();
+          GameState.flagSpawnTimer = lvl.flagInterval * (0.9 + Math.random() * 0.25);
+        }
+
+        GameState.obstacleSpawnTimer -= dt;
+        if (GameState.obstacleSpawnTimer <= 0) {
+          spawnObstacle();
+          const interval = lvl.obstacleInterval * age.spawnIntervalMultiplier / (1 + timeProgression * 0.5);
+          GameState.obstacleSpawnTimer = interval * (0.88 + Math.random() * 0.26);
+        }
+
+        const planeHitX = p.x + 10;
+        const planeHitY = p.y + 8;
+        const planeHitW = p.width - 20;
+        const planeHitH = p.height - 16;
+
+        for (let i = GameState.flags.length - 1; i >= 0; i--) {
+          const f = GameState.flags[i];
+          f.x -= scrollSpeed * dt;
+          f.wavePhase += dt * 6;
+          if (!GameState.reducedMotion) {
+            f.y = f.baseY + Math.sin(f.wavePhase) * 6;
+          }
+
+          if (!f.collected && rectsIntersect(planeHitX, planeHitY, planeHitW, planeHitH, f.x, f.y, f.width, f.height)) {
+            handleFlagCollected(f);
+            if (GameState.screen !== "playing") return;
+          }
+
+          if (f.collected || f.x + f.width < -60) {
+            GameState.flags.splice(i, 1);
+          }
+        }
+
+        for (let i = GameState.obstacles.length - 1; i >= 0; i--) {
+          const obs = GameState.obstacles[i];
+          obs.x -= scrollSpeed * dt;
+          obs.swayPhase += dt * obs.swaySpeed;
+          if (!GameState.reducedMotion) {
+            obs.y = obs.baseY + Math.sin(obs.swayPhase) * obs.swayRange;
+          }
+
+          const padX = obs.width * 0.14;
+          const padY = obs.height * 0.14;
+          if (
+            !obs.hit &&
+            rectsIntersect(
+              planeHitX,
+              planeHitY,
+              planeHitW,
+              planeHitH,
+              obs.x + padX,
+              obs.y + padY,
+              obs.width - padX * 2,
+              obs.height - padY * 2
+            )
+          ) {
+            handleObstacleCollision(obs);
+            if (GameState.screen !== "playing") return;
+          }
+
+          if (obs.x + obs.width < -80) {
+            GameState.obstacles.splice(i, 1);
+          }
+        }
+
+        for (let i = GameState.particles.length - 1; i >= 0; i--) {
+          const pt = GameState.particles[i];
+          pt.x += pt.vx * dt;
+          pt.y += pt.vy * dt;
+          pt.life -= dt;
+          if (pt.life <= 0) GameState.particles.splice(i, 1);
+        }
+
+        for (let i = GameState.floatingTexts.length - 1; i >= 0; i--) {
+          const ft = GameState.floatingTexts[i];
+          ft.y -= 36 * dt;
+          ft.life -= dt;
+          if (ft.life <= 0) GameState.floatingTexts.splice(i, 1);
+        }
+      }
+
+      /* =========================================================================
+       * 10. GÖRSEL ÇİZİM MOTORU (TÜRKİYE MANZARALARI, UÇAK, BAYRAK, ENGELLER)
+       * ========================================================================= */
+      function drawTurkishFlagGraphic(ctx, x, y, w, h, wavePhase = 0, reducedMotion = false) {
+        ctx.save();
+        const wave = reducedMotion ? 0 : Math.sin(wavePhase) * 2.5;
+
+        ctx.fillStyle = "#e30a17";
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.roundRect(x, y + wave * 0.4, w, h, 5);
+        ctx.fill();
+        ctx.stroke();
+
+        const cx = x + w * 0.38;
+        const cy = y + h * 0.5 + wave * 0.4;
+        const outerR = h * 0.26;
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#e30a17";
+        ctx.beginPath();
+        ctx.arc(cx + outerR * 0.24, cy, outerR * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        const starX = x + w * 0.64;
+        const starY = cy;
+        const starOuter = h * 0.15;
+        const starInner = starOuter * 0.42;
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? starOuter : starInner;
+          const angle = -Math.PI / 2 + (i * Math.PI) / 5 - 0.2;
+          const sx = starX + Math.cos(angle) * r;
+          const sy = starY + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(sx, sy);
+          else ctx.lineTo(sx, sy);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawPlane(ctx, p, invulnerableTimer) {
+        ctx.save();
+        const cx = p.x + p.width / 2;
+        const cy = p.y + p.height / 2;
+        ctx.translate(cx, cy);
+        ctx.rotate(p.pitch);
+
+        if (invulnerableTimer > 0) {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.width * 0.62, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(56, 189, 248, 0.22)";
+          ctx.fill();
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = "rgba(251, 191, 36, 0.85)";
+          ctx.stroke();
+
+          if (Math.floor(invulnerableTimer * 10) % 2 === 0) {
+            ctx.globalAlpha = 0.65;
+          }
+        }
+
+        const w = p.width;
+        const h = p.height;
+
+        // Tail fin
+        ctx.fillStyle = "#e30a17";
+        ctx.beginPath();
+        ctx.moveTo(-w * 0.44, -h * 0.05);
+        ctx.lineTo(-w * 0.5, -h * 0.52);
+        ctx.lineTo(-w * 0.24, -h * 0.12);
+        ctx.closePath();
+        ctx.fill();
+
+        // Main Fuselage
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#9e050f";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-w * 0.45, -h * 0.12);
+        ctx.quadraticCurveTo(w * 0.1, -h * 0.34, w * 0.44, 0);
+        ctx.quadraticCurveTo(w * 0.1, h * 0.34, -w * 0.45, h * 0.14);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Red nose & stripe
+        ctx.fillStyle = "#e30a17";
+        ctx.beginPath();
+        ctx.moveTo(w * 0.2, -h * 0.19);
+        ctx.quadraticCurveTo(w * 0.44, 0, w * 0.2, h * 0.19);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillRect(-w * 0.36, -2, w * 0.54, 5);
+
+        // Cockpit Canopy
+        ctx.fillStyle = "#38bdf8";
+        ctx.strokeStyle = "#0f2547";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.ellipse(w * 0.02, -h * 0.18, w * 0.16, h * 0.14, 0, Math.PI, 0, false);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Lower Wing with Turkish Flag Motif
+        ctx.fillStyle = "#e30a17";
+        ctx.beginPath();
+        ctx.roundRect(-w * 0.14, h * 0.04, w * 0.32, h * 0.22, 5);
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(0, h * 0.15, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#e30a17";
+        ctx.beginPath();
+        ctx.arc(1.2, h * 0.15, 3.1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(4.8, h * 0.15, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Spinning Propeller
+        ctx.strokeStyle = "#fbbf24";
+        ctx.lineWidth = 3;
+        const propLen = Math.sin(p.propellerAngle) * (h * 0.38);
+        ctx.beginPath();
+        ctx.moveTo(w * 0.46, -propLen);
+        ctx.lineTo(w * 0.46, propLen);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawObstacle(ctx, obs) {
+        ctx.save();
+        if (obs.type === "balloon") {
+          const cx = obs.x + obs.width / 2;
+          const topCy = obs.y + obs.height * 0.42;
+          const rx = obs.width * 0.46;
+          const ry = obs.height * 0.42;
+
+          ctx.strokeStyle = "#78350f";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx - rx * 0.4, topCy + ry * 0.8);
+          ctx.lineTo(cx - rx * 0.25, obs.y + obs.height * 0.84);
+          ctx.moveTo(cx + rx * 0.4, topCy + ry * 0.8);
+          ctx.lineTo(cx + rx * 0.25, obs.y + obs.height * 0.84);
+          ctx.stroke();
+
+          ctx.fillStyle = "#b45309";
+          ctx.strokeStyle = "#451a03";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(cx - rx * 0.32, obs.y + obs.height * 0.82, rx * 0.64, obs.height * 0.16, 3);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = obs.colors[0];
+          ctx.strokeStyle = "#1e293b";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.ellipse(cx, topCy, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = obs.colors[1];
+          ctx.beginPath();
+          ctx.ellipse(cx, topCy, rx * 0.45, ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          const x = obs.x;
+          const y = obs.y;
+          const w = obs.width;
+          const h = obs.height;
+
+          ctx.fillStyle = "#64748b";
+          ctx.strokeStyle = "#1e293b";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(x + w * 0.15, y + h * 0.88);
+          ctx.lineTo(x + w * 0.04, y + h * 0.45);
+          ctx.lineTo(x + w * 0.28, y + h * 0.1);
+          ctx.lineTo(x + w * 0.68, y + h * 0.06);
+          ctx.lineTo(x + w * 0.95, y + h * 0.42);
+          ctx.lineTo(x + w * 0.84, y + h * 0.9);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = "#94a3b8";
+          ctx.beginPath();
+          ctx.moveTo(x + w * 0.28, y + h * 0.14);
+          ctx.lineTo(x + w * 0.64, y + h * 0.12);
+          ctx.lineTo(x + w * 0.52, y + h * 0.48);
+          ctx.lineTo(x + w * 0.18, y + h * 0.45);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawBackgroundScenery(ctx, lvl, timeSec) {
+        const w = canvas.width;
+        const h = canvas.height;
+
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, lvl.skyTop);
+        grad.addColorStop(1, lvl.skyBottom);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        if (lvl.id >= 3) {
+          ctx.fillStyle = "#ffffff";
+          GameState.stars.forEach((st) => {
+            const alpha = 0.4 + 0.5 * Math.sin(timeSec * 2 + st.phase);
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.globalAlpha = 1;
+        }
+
+        ctx.save();
+        if (lvl.id === 1 || lvl.id === 2) {
+          ctx.fillStyle = lvl.id === 1 ? "rgba(253, 224, 71, 0.85)" : "rgba(251, 146, 60, 0.85)";
+          ctx.beginPath();
+          ctx.arc(w * 0.82, h * 0.2, 42, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillStyle = "rgba(248, 250, 252, 0.9)";
+          ctx.beginPath();
+          ctx.arc(w * 0.84, h * 0.18, 32, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+
+        GameState.clouds.forEach((c) => {
+          if (!GameState.reducedMotion) {
+            c.x -= c.speed * 0.016;
+            if (c.x < -160) c.x = w + 120;
+          }
+          ctx.save();
+          ctx.fillStyle = `rgba(255, 255, 255, ${c.alpha * (lvl.id === 4 ? 0.25 : 0.8)})`;
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, 26 * c.scale, 0, Math.PI * 2);
+          ctx.arc(c.x + 22 * c.scale, c.y - 8 * c.scale, 32 * c.scale, 0, Math.PI * 2);
+          ctx.arc(c.x + 48 * c.scale, c.y, 24 * c.scale, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+
+        const scrollFar = (GameState.bgScroll * 0.22) % 600;
+        ctx.fillStyle = lvl.mountainColorFar;
+        for (let x = -scrollFar - 600; x < w + 600; x += 300) {
+          ctx.beginPath();
+          ctx.moveTo(x, h);
+          ctx.lineTo(x + 150, h - 155);
+          ctx.lineTo(x + 300, h);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        const scrollNear = (GameState.bgScroll * 0.48) % 800;
+        ctx.fillStyle = lvl.mountainColorNear;
+        for (let x = -scrollNear - 800; x < w + 800; x += 400) {
+          ctx.beginPath();
+          ctx.moveTo(x, h);
+          ctx.quadraticCurveTo(x + 200, h - 125, x + 400, h);
+          ctx.closePath();
+          ctx.fill();
+
+          if (lvl.id === 1) {
+            ctx.fillRect(x + 95, h - 98, 22, 55);
+            ctx.beginPath();
+            ctx.moveTo(x + 90, h - 98);
+            ctx.lineTo(x + 106, h - 122);
+            ctx.lineTo(x + 122, h - 98);
+            ctx.fill();
+          } else if (lvl.id === 2) {
+            ctx.beginPath();
+            ctx.moveTo(x + 120, h - 30);
+            ctx.lineTo(x + 130, h - 92);
+            ctx.lineTo(x + 142, h - 30);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + 130, h - 95, 12, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (lvl.id === 3) {
+            ctx.fillRect(x + 140, h - 78, 96, 42);
+            ctx.fillStyle = "rgba(251, 191, 36, 0.35)";
+            for (let col = 0; col < 6; col++) {
+              ctx.fillRect(x + 148 + col * 15, h - 70, 6, 30);
+            }
+            ctx.fillStyle = lvl.mountainColorNear;
+          }
+        }
+
+        ctx.fillStyle = lvl.groundColor;
+        ctx.fillRect(0, h - 22, w, 22);
+      }
+
+      function renderIntroMiniStage(timeSec) {
+        if (!introCtx || GameState.screen !== "start") return;
+        const w = introCanvas.width;
+        const h = introCanvas.height;
+
+        const grad = introCtx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, "#0284c7");
+        grad.addColorStop(1, "#bae6fd");
+        introCtx.fillStyle = grad;
+        introCtx.fillRect(0, 0, w, h);
+
+        // Moving clouds in intro stage
+        const cloudOffset = GameState.reducedMotion ? 0 : (timeSec * 35) % w;
+        introCtx.fillStyle = "rgba(255, 255, 255, 0.82)";
+        [110, 320, 520].forEach((baseX, idx) => {
+          const cx = (baseX - cloudOffset + w) % w;
+          const cy = 28 + (idx % 2) * 20;
+          introCtx.beginPath();
+          introCtx.arc(cx, cy, 16, 0, Math.PI * 2);
+          introCtx.arc(cx + 14, cy - 5, 20, 0, Math.PI * 2);
+          introCtx.arc(cx + 30, cy, 15, 0, Math.PI * 2);
+          introCtx.fill();
+        });
+
+        // Animated Plane on left-center
+        const bobY = GameState.reducedMotion ? 0 : Math.sin(timeSec * 3) * 8;
+        const demoPlane = {
+          x: 90,
+          y: 30 + bobY,
+          width: 82,
+          height: 42,
+          pitch: GameState.reducedMotion ? 0 : Math.cos(timeSec * 3) * 0.08,
+          propellerAngle: timeSec * 25
+        };
+        drawPlane(introCtx, demoPlane, 0);
+
+        // Animated Turkish Flags on right
+        drawTurkishFlagGraphic(introCtx, 310, 34 - bobY * 0.6, 52, 34, timeSec * 5, GameState.reducedMotion);
+        drawTurkishFlagGraphic(introCtx, 430, 26 + bobY * 0.6, 52, 34, timeSec * 5 + 1.2, GameState.reducedMotion);
+        drawTurkishFlagGraphic(introCtx, 540, 36 - bobY * 0.5, 52, 34, timeSec * 5 + 2.4, GameState.reducedMotion);
+      }
+
+      function renderScene(timeMs) {
+        const timeSec = timeMs * 0.001;
+        const lvl = LEVELS[GameState.currentLevelIndex] || LEVELS[0];
+
+        drawBackgroundScenery(ctx, lvl, timeSec);
+        renderIntroMiniStage(timeSec);
+
+        if (GameState.screen === "start" || GameState.screen === "howto" || GameState.screen === "age" || GameState.screen === "levels") {
+          if (!GameState.reducedMotion) {
+            GameState.bgScroll = (GameState.bgScroll + 1.8) % 2400;
+          }
+          return;
+        }
+
+        GameState.flags.forEach((f) => {
+          if (!f.collected) {
+            drawTurkishFlagGraphic(ctx, f.x, f.y, f.width, f.height, f.wavePhase, GameState.reducedMotion);
+          }
+        });
+
+        GameState.obstacles.forEach((obs) => {
+          drawObstacle(ctx, obs);
+        });
+
+        drawPlane(ctx, GameState.plane, GameState.invulnerableTimer);
+
+        GameState.particles.forEach((pt) => {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, pt.life);
+          ctx.fillStyle = pt.color;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+
+        GameState.floatingTexts.forEach((ft) => {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, ft.life);
+          ctx.font = "900 18px 'Segoe UI', sans-serif";
+          ctx.fillStyle = ft.color;
+          ctx.strokeStyle = "#0f172a";
+          ctx.lineWidth = 3;
+          ctx.strokeText(ft.text, ft.x, ft.y);
+          ctx.fillText(ft.text, ft.x, ft.y);
+          ctx.restore();
+        });
+      }
+
+      /* =========================================================================
+       * 11. BUTON OLAY DİNLEYİCİLERİ VE BAŞLATMA
+       * ========================================================================= */
+      function toggleSound() {
+        GameState.soundEnabled = !GameState.soundEnabled;
+        SoundManager.setEnabled(GameState.soundEnabled);
+        if (GameState.soundEnabled) SoundManager.playClick();
+        updateSoundButtonsUI();
+        saveProgress();
+      }
+
+      function toggleReducedMotion() {
+        SoundManager.playClick();
+        GameState.reducedMotion = !GameState.reducedMotion;
+        updateMotionButtonUI();
+        saveProgress();
+      }
+
+      document.getElementById("btnStartGame").addEventListener("click", () => {
+        SoundManager.playClick();
+        startLevel(0, true);
+      });
+
+      document.getElementById("btnOpenLevels").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("levels");
+      });
+
+      document.getElementById("btnOpenHowTo").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("howto");
+      });
+
+      document.getElementById("btnOpenAge").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("age");
+      });
+
+      document.getElementById("btnToggleSoundMain").addEventListener("click", toggleSound);
+      document.getElementById("btnToggleMotion").addEventListener("click", toggleReducedMotion);
+
+      document.getElementById("btnHowToBack").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("start");
+      });
+
+      document.getElementById("btnHowToPlay").addEventListener("click", () => {
+        SoundManager.playClick();
+        startLevel(0, true);
+      });
+
+      document.getElementById("btnAgeBack").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("start");
+      });
+
+      document.getElementById("btnAgePlay").addEventListener("click", () => {
+        SoundManager.playClick();
+        startLevel(0, true);
+      });
+
+      document.getElementById("btnLevelsBack").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("start");
+      });
+
+      document.getElementById("hudSoundBtn").addEventListener("click", toggleSound);
+      document.getElementById("hudPauseBtn").addEventListener("click", () => {
+        if (GameState.screen === "playing") pauseGame();
+        else if (GameState.screen === "paused") resumeGame();
+      });
+
+      document.getElementById("btnResumeGame").addEventListener("click", resumeGame);
+      document.getElementById("btnRestartFromPause").addEventListener("click", () => {
+        SoundManager.playClick();
+        startLevel(GameState.currentLevelIndex, false);
+      });
+      document.getElementById("btnToggleSoundPause").addEventListener("click", toggleSound);
+      document.getElementById("btnPauseToLevels").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("levels");
+      });
+      document.getElementById("btnPauseToMenu").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("start");
+      });
+
+      document.getElementById("btnNextLevel").addEventListener("click", () => {
+        SoundManager.playClick();
+        const nextIdx = Math.min(LEVELS.length - 1, GameState.currentLevelIndex + 1);
+        startLevel(nextIdx, false);
+      });
+      document.getElementById("btnReplayLevel").addEventListener("click", () => {
+        SoundManager.playClick();
+        startLevel(GameState.currentLevelIndex, false);
+      });
+      document.getElementById("btnLcToMenu").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("start");
+      });
+
+      document.getElementById("btnRetryLevel").addEventListener("click", () => {
+        SoundManager.playClick();
+        startLevel(GameState.currentLevelIndex, false);
+      });
+      document.getElementById("btnGoToLevels").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("levels");
+      });
+      document.getElementById("btnGoToMenu").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("start");
+      });
+
+      document.getElementById("btnPlayAgainAll").addEventListener("click", () => {
+        SoundManager.playClick();
+        startLevel(0, true);
+      });
+      document.getElementById("btnVictoryLevels").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("levels");
+      });
+      document.getElementById("btnVictoryMenu").addEventListener("click", () => {
+        SoundManager.playClick();
+        showScreen("start");
+      });
+
+      let lastFrameTime = performance.now();
+      function mainLoop(now) {
+        const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameTime) / 1000));
+        lastFrameTime = now;
+
+        if (GameState.screen === "playing") {
+          updateGame(dt);
+        }
+        renderScene(now);
+        requestAnimationFrame(mainLoop);
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+      window.addEventListener("beforeunload", () => ScormManager.finish());
+
+      window.__BAYRAK_AVCISI_GAME__ = {
+        GameState,
+        LEVELS,
+        AGE_GROUPS,
+        startLevel,
+        pauseGame,
+        resumeGame,
+        spawnFlag,
+        spawnObstacle,
+        handleFlagCollected,
+        handleObstacleCollision,
+        updateGame
+      };
+
+      loadProgress();
+      ScormManager.init();
+      resizeCanvas();
+      showScreen("start");
+      requestAnimationFrame(mainLoop);
+    })();
+  </script>
+</body>
+</html>
